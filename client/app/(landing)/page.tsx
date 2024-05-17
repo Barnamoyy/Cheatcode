@@ -1,6 +1,7 @@
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
+import { UserButton } from "@clerk/nextjs";
 
 const Page = () => {
     return (
@@ -8,6 +9,7 @@ const Page = () => {
             <Link href={"/sign-up"}>
                 <Button variant="link">Sign-up</Button>
             </Link>
+            <UserButton />
         </div>
     );
 }
