@@ -30,6 +30,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useUser } from "@clerk/nextjs";
 import axios from "axios";
+import ExampleModal from "@/components/example-modal";
+import useExampleStore from "@/store/example-store";
 
 const formSchema = z.object({
   title: z.string().min(2, {
@@ -47,14 +49,15 @@ const formSchema = z.object({
 });
 
 const Page = () => {
+  const { example, setExample } = useExampleStore();
 
-    const user = useUser();
+  const user = useUser();
 
-    useEffect(() => {
-        if(user?.user?.publicMetadata.role !== 'admin'){
-            window.location.href = '/dashboard';
-        }
-    }, [])
+  useEffect(() => {
+    if (user?.user?.publicMetadata.role !== "admin") {
+      window.location.href = "/dashboard";
+    }
+  }, []);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -69,13 +72,13 @@ const Page = () => {
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
+    const data = { ...values, example };
     try {
-        const res = axios.post('/api/add', values);
-        console.log(res);
+      const res = axios.post("/api/add", data);
+      console.log(res);
     } catch (error) {
-        console.error(error);
+      console.error(error);
     }
-    console.log(values);
   }
 
   return (
@@ -97,9 +100,13 @@ const Page = () => {
             </AlertDialogHeader>
             <AlertDialogFooter>
               <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction onClick={() => {
-                window.location.href = '/dashboard';
-              }}>Continue</AlertDialogAction>
+              <AlertDialogAction
+                onClick={() => {
+                  window.location.href = "/dashboard";
+                }}
+              >
+                Continue
+              </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
@@ -175,6 +182,22 @@ const Page = () => {
                 </FormItem>
               )}
             />
+            <div className="flex justify-start items-center flex-row space-x-2 lg:space-x-4">
+              <h1>Add Example</h1>
+              <ExampleModal />
+            </div>
+            {example.map((item) => (
+              <div className="w-full bg-slate-800 flex justify-start items-center flex-col space-y-2 lg:space-y-4 px-2 py-2 lg:px-4 lg:py-4 rounded-lg">
+                <div className="flex justify-start items-center flex-row space-x-2 lg:gap-x-4 w-full">
+                  <h1>Input:</h1>
+                  {item?.input}
+                </div>
+                <div className="flex justify-start items-center flex-row space-x-2 lg:gap-x-4 w-full">
+                  <h1>Output:</h1>
+                  {item?.output}
+                </div>
+              </div>
+            ))}
             <Button type="submit" className="w-full">
               Submit
             </Button>
