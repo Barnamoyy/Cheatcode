@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -49,6 +49,9 @@ const formSchema = z.object({
 });
 
 const Page = () => {
+  const [loading, setLoading] = useState<boolean>(false);
+  const [success, setSuccess] = useState<boolean>(false);
+
   const { example, setExample } = useExampleStore();
 
   const user = useUser();
@@ -72,12 +75,16 @@ const Page = () => {
   function onSubmit(values: z.infer<typeof formSchema>) {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
+    setLoading(true);
     const data = { ...values, example };
     try {
       const res = axios.post("/api/add", data);
       console.log(res);
     } catch (error) {
       console.error(error);
+    } finally {
+      setLoading(false);
+      setSuccess(true);
     }
   }
 
@@ -110,6 +117,33 @@ const Page = () => {
             </AlertDialogFooter>
           </AlertDialogContent>
         </AlertDialog>
+
+        {success ? (
+          <AlertDialog open={success} onOpenChange={setSuccess}>
+            {/* <AlertDialogTrigger>Open</AlertDialogTrigger> */}
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Problem added successfully!</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This problem will now be visible to others. Others will be
+                  able to see the examples and the main problem statement.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogAction
+                  onClick={() => {
+                    window.location.href = "/dashboard";
+                    setSuccess(false);
+                  }}
+                >
+                  Continue
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        ) : (
+          <></>
+        )}
       </div>
       <h1 className="text-md lg:text-xl font-semibold">Add a question</h1>
       <div className="w-full h-full lg:w-2/3 lg:h-2/3 py-2 lg:py-4">
