@@ -80,7 +80,7 @@ const DashboardHome = () => {
                 {problems &&
                   problems.map((problem) => (
                     <TableRow>
-                      <TableCell className="font-medium">
+                      <TableCell className="font-medium truncate">
                         {problem.title}
                       </TableCell>
                       <TableCell>
@@ -110,7 +110,7 @@ const DashboardHome = () => {
                         ) : <></>}
                       </TableCell>
                       <TableCell>{problem.acceptance}</TableCell>
-                      <TableCell className="text-left text-ellipsis text-nowrap">
+                      <TableCell className="text-left truncate">
                         {problem.description}
                       </TableCell>
                     </TableRow>

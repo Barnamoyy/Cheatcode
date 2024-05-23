@@ -21,4 +21,18 @@ model Problem {
   acceptance String 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  examples    Example[] @relation("ProblemExamples")
+}
+
+
+model Example {
+  id        String   @id @default(cuid()) @map("_id")
+  input     String
+  output    String
+  problemId String   @map("problem_id")
+  problem   Problem  @relation("ProblemExamples", fields: [problemId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
