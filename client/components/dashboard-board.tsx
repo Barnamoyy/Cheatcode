@@ -15,8 +15,10 @@ import {
 import { Progress } from "@/components/ui/progress";
 import axios from "axios";
 import { Skeleton } from "@/components/ui/skeleton"
+import Link from "next/link";
 
 interface Problem {
+  id: string; 
   title: string;
   difficulty: string;
   acceptance: string;
@@ -48,7 +50,7 @@ const DashboardHome = () => {
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-x-2">
         <div className="lg:col-span-4">
           <h1 className="text-md lg:text-2xl font-semibold">Problems</h1>
-          <div>
+          <div className="w-full h-full">
             <Table>
               <TableCaption>Happy Coding !</TableCaption>
               <TableHeader>
@@ -81,7 +83,9 @@ const DashboardHome = () => {
                   problems.map((problem) => (
                     <TableRow>
                       <TableCell className="font-medium truncate">
+                        <Link href={`/problem/${problem.id}`}>
                         {problem.title}
+                        </Link>
                       </TableCell>
                       <TableCell>
                         {problem.difficulty.toLowerCase() === "easy" ? (

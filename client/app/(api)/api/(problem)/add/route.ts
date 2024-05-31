@@ -4,7 +4,7 @@ const prisma = new PrismaClient();
 
 export async function POST(request: Request, response: Response) {
   const body = await request.json();
-  const { title, difficulty, acceptance, description, example } = body;
+  const { title, difficulty, acceptance, description, example, testcase } = body;
   const problem = await prisma.problem.create({
     data: {
       title,
@@ -17,7 +17,16 @@ export async function POST(request: Request, response: Response) {
           output: ex.output,
         })),
       },
+      testcases: {
+        create: testcase.map((tc:any) => ({
+          input: tc.input,
+          output: tc.output,
+        })),
+      },
     },
   });
+
+
+  console.log(problem)
   return new Response(JSON.stringify(problem), { status: 200 });
 }
