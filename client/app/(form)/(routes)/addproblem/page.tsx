@@ -28,10 +28,13 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea"
 import { useUser } from "@clerk/nextjs";
 import axios from "axios";
 import ExampleModal from "@/components/example-modal";
 import useExampleStore from "@/store/example-store";
+import TestcaseModal from "@/components/testcase-modal";
+import useTestcaseStore from "@/store/testcase-store";
 
 const formSchema = z.object({
   title: z.string().min(2, {
@@ -53,6 +56,7 @@ const Page = () => {
   const [success, setSuccess] = useState<boolean>(false);
 
   const { example, setExample } = useExampleStore();
+  const {testcase, setTestcase} = useTestcaseStore();
 
   const user = useUser();
 
@@ -76,13 +80,14 @@ const Page = () => {
     // Do something with the form values.
     // ✅ This will be type-safe and validated.
     setLoading(true);
-    const data = { ...values, example };
+    const data = { ...values, example, testcase};
     try {
       const res = axios.post("/api/add", data);
       console.log(res);
     } catch (error) {
       console.error(error);
     } finally {
+      form.reset();
       setLoading(false);
       setSuccess(true);
     }
@@ -207,7 +212,7 @@ const Page = () => {
                 <FormItem>
                   <FormLabel>Description</FormLabel>
                   <FormControl>
-                    <Input placeholder="The question says..." {...field} />
+                    <Textarea placeholder="The question says..." {...field} />
                   </FormControl>
                   <FormDescription>
                     This is your public display name.
@@ -221,6 +226,22 @@ const Page = () => {
               <ExampleModal />
             </div>
             {example.map((item) => (
+              <div className="w-full bg-slate-800 flex justify-start items-center flex-col space-y-2 lg:space-y-4 px-2 py-2 lg:px-4 lg:py-4 rounded-lg">
+                <div className="flex justify-start items-center flex-row space-x-2 lg:gap-x-4 w-full">
+                  <h1>Input:</h1>
+                  {item?.input}
+                </div>
+                <div className="flex justify-start items-center flex-row space-x-2 lg:gap-x-4 w-full">
+                  <h1>Output:</h1>
+                  {item?.output}
+                </div>
+              </div>
+            ))}
+            <div className="flex justify-start items-center flex-row space-x-2 lg:space-x-4">
+              <h1>Add Testcase</h1>
+              <TestcaseModal />
+            </div>
+            {testcase.map((item) => (
               <div className="w-full bg-slate-800 flex justify-start items-center flex-col space-y-2 lg:space-y-4 px-2 py-2 lg:px-4 lg:py-4 rounded-lg">
                 <div className="flex justify-start items-center flex-row space-x-2 lg:gap-x-4 w-full">
                   <h1>Input:</h1>

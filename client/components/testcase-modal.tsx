@@ -19,9 +19,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-
-import useExampleStore from "@/store/example-store";
-import { set } from "date-fns";
+import useTestcaseStore from "@/store/testcase-store";
 
 const dialogSchema = z.object({
   input: z.string().min(2, {
@@ -32,8 +30,8 @@ const dialogSchema = z.object({
   }),
 });
 
-const ExampleModal = () => {
-  const { example, setExample } = useExampleStore();
+const TestcaseModal = () => {
+  const { testcase, setTestcase } = useTestcaseStore();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const dialog = useForm<z.infer<typeof dialogSchema>>({
@@ -49,7 +47,7 @@ const ExampleModal = () => {
   }
 
   const handleExampleSubmit = () => {
-    setExample({
+    setTestcase({
       input: dialog.getValues("input"),
       output: dialog.getValues("output"),
     });
@@ -74,7 +72,7 @@ const ExampleModal = () => {
                 name="input"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Title</FormLabel>
+                    <FormLabel>Input</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Question title goes here"
@@ -90,7 +88,7 @@ const ExampleModal = () => {
                 name="output"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Difficulty</FormLabel>
+                    <FormLabel>Output</FormLabel>
                     <FormControl>
                       <Input placeholder="Is this enough?" {...field} />
                     </FormControl>
@@ -109,4 +107,4 @@ const ExampleModal = () => {
   );
 };
 
-export default ExampleModal;
+export default TestcaseModal;
