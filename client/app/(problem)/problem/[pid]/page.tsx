@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { getFontSize, setFontSize } from "@/lib/storage";
 
 import axios from "axios";
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/popover";
 import { set } from "date-fns";
 import TestcaseWindow from "@/components/testcase-window";
+import { format } from "path";
 
 interface Problem {
   id: string;
@@ -45,13 +46,19 @@ interface Testcase {
 }
 
 const Page = () => {
-
   const [showTestcase, setShowTestcase] = useState<Testcase | null>(null);
 
   // editor states
-  const [fontSizeState, setFontSizeState] = useState<number>(getFontSize() || 12);
+  const [fontSizeState, setFontSizeState] = useState<number>(
+    getFontSize() || 12
+  );
 
   const [currentProblem, setCurrentProblem] = useState<Problem | null>(null);
+
+  const [language, setLanguage] = useState<string>("python");
+  const [code, setCode] = useState("");
+  // const [testcases, setTestcases] = useState<Testcase[]>([{ id: "", input: "", output: ""}]);
+  const [results, setResults] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -73,7 +80,25 @@ const Page = () => {
   }, [currentProblem]);
 
   const params = useParams<{ pid: string }>();
-  console.log(params?.pid);
+
+  // logic for submitting code 
+  const submitCode = async () => {
+    try {
+      const formattedTestcases = currentProblem?.testcases.map(tc => [tc.input, tc.output])
+      const response = await axios.post('http://localhost:8080/run_code', {
+        language,
+        code,
+        test_cases: formattedTestcases
+      });
+      setResults(response.data.results);
+    } catch (error) {
+      console.error("Error running code:", error);
+    }
+  };
+
+  useEffect(() => { 
+    console.log(results);
+  }, [results]);
 
   const handleFontSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const newFontSize = parseInt(e.target.value);
@@ -141,45 +166,56 @@ const Page = () => {
             <div className="flex flex-row justify-start items-center space-x-2 lg:space-x-4 mt-2 lg:mt-4">
               {currentProblem.testcases.map((testcase, index) => (
                 <div key={testcase.id}>
-                    <Button className="bg-green-500/10 text-green-500 rounded-md lg:rounded-lg px-2 py-1 lg:px-2 lg:py-2" onClick={() => {
-                      setShowTestcase(testcase)
-                    }}>
-                      {`Test ${index + 1}`}
-                    </Button>
-                </div> 
+                  <Button
+                    className="bg-green-500/10 text-green-500 rounded-md lg:rounded-lg px-2 py-1 lg:px-2 lg:py-2"
+                    onClick={() => {
+                      setShowTestcase(testcase);
+                    }}
+                  >
+                    {`Test ${index + 1}`}
+                  </Button>
+                </div>
               ))}
             </div>
-              {showTestcase && <TestcaseWindow {...showTestcase}/>}
+            {showTestcase && <TestcaseWindow {...showTestcase} />}
             <div className="py-2 lg:py-4">
               <h2 className="my-2 lg:my-4 font-semibold">Constraints</h2>
               <p className="text-sm lg:text-[16px] leading-6 py-1 lg:py-2">
-                      {`2 <= nums.length <= 10^4`}
+                {`2 <= nums.length <= 10^4`}
               </p>
               <p className="text-sm lg:text-[16px] leading-6 py-1 lg:py-2">
-                      {`10^9 <= nums[i] <= 10^9`}
+                {`10^9 <= nums[i] <= 10^9`}
               </p>
               <p className="text-sm lg:text-[16px] leading-6 py-1 lg:py-2">
-                      {`10^9 <= target <= 10^9`}
+                {`10^9 <= target <= 10^9`}
               </p>
-
             </div>
           </div>
         </ResizablePanel>
         <ResizableHandle />
         <ResizablePanel defaultSize={50}>
           <div className="w-full h-full">
-            <select name="language" id="language" defaultValue={"javascript"} className="bg-transparent my-2 lg:my-4">
-              <option value="javascript">Javascript</option>
-              <option value="c++">C++</option>
+            <select
+              name="language"
+              id="language"
+              defaultValue={"javascript"}
+              className="bg-transparent my-2 lg:my-4"
+              value={language}
+              onChange={(e) => setLanguage(e.target.value)}
+            >
+              <option value="js">Javascript</option>
+              <option value="cpp">C++</option>
               <option value="python">Python</option>
               <option value="java">Java</option>
             </select>
             <Editor
               height={"80%"}
-              defaultLanguage="javascript"
+              defaultLanguage={language}
               defaultValue="//some comment"
               theme="vs-dark"
               className="py-0 lg:py-2 rounded-lg"
+              value={code}
+              onChange={(value) => setCode(value || "")}
               options={{
                 minimap: { enabled: false },
                 fontSize: fontSizeState,
@@ -187,7 +223,7 @@ const Page = () => {
               }}
             />
             <div className="flex flex-row space-x-4 lg:space-x-8 items-center">
-              <Button className="text-white bg-green-500">Submit</Button>
+              <Button className="text-white bg-green-500" onClick={submitCode}>Submit</Button>
               <Popover>
                 <PopoverTrigger asChild>
                   <Settings className="cursor-pointer" />
