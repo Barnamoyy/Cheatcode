@@ -61,81 +61,78 @@ def run_js_code(code, input_data):
             os.remove(js_file)
 
 
+def run_python_code(code, input_data):
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".py") as temp:
+        temp.write(code.encode())
+        temp.close()
+        py_file = temp.name
+    try:
+        run_result = subprocess.run(["python3", py_file], input=input_data, capture_output=True, text=True)
+        output = run_result.stdout if run_result.returncode == 0 else run_result.stderr
+        return output.strip()
+    finally: 
+        if os.path.exists(py_file):
+            os.remove(py_file)
+
 # Example usage
 java_code = """
-const readline = require('readline');
+class ListNode:
+    def __init__(self, val=0, next=None):
+        self.val = val
+        self.next = next
 
-class ListNode {
-    constructor(val = 0, next = null) {
-        this.val = val;
-        this.next = next;
-    }
-}
+class Solution:
+    def addTwoNumbers(self, l1, l2):
+        dummy = ListNode()
+        res = dummy
+        total, carry = 0, 0
 
-class Solution {
-    addTwoNumbers(l1, l2) {
-        let dummy = new ListNode();
-        let res = dummy;
-        let total = 0, carry = 0;
+        while l1 is not None or l2 is not None or carry != 0:
+            total = carry
 
-        while (l1 !== null || l2 !== null || carry !== 0) {
-            total = carry;
+            if l1 is not None:
+                total += l1.val
+                l1 = l1.next
+            if l2 is not None:
+                total += l2.val
+                l2 = l2.next
 
-            if (l1 !== null) {
-                total += l1.val;
-                l1 = l1.next;
-            }
-            if (l2 !== null) {
-                total += l2.val;
-                l2 = l2.next;
-            }
+            num = total % 10
+            carry = total // 10
+            dummy.next = ListNode(num)
+            dummy = dummy.next
 
-            let num = total % 10;
-            carry = Math.floor(total / 10);
-            dummy.next = new ListNode(num);
-            dummy = dummy.next;
-        }
+        return res.next
 
-        return res.next;
-    }
-}
+def create_list(input_string):
+    values = list(map(int, input_string.split()))
+    dummy = ListNode()
+    current = dummy
+    for value in values:
+        current.next = ListNode(value)
+        current = current.next
+    return dummy.next
 
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout
-});
+def main():
+    input1 = input().strip()
+    input2 = input().strip()
 
-function createList(input) {
-    let values = input.split(" ").map(Number);
-    let dummy = new ListNode();
-    let current = dummy;
-    for (let value of values) {
-        current.next = new ListNode(value);
-        current = current.next;
-    }
-    return dummy.next;
-}
+    l1 = create_list(input1)
+    l2 = create_list(input2)
 
-rl.question('', (input1) => {
-    rl.question('', (input2) => {
-        let l1 = createList(input1);
-        let l2 = createList(input2);
+    solution = Solution()
+    result = solution.addTwoNumbers(l1, l2)
 
-        let solution = new Solution();
-        let result = solution.addTwoNumbers(l1, l2);
+    output = []
+    while result is not None:
+        output.append(result.val)
+        result = result.next
+    print(' '.join(map(str, output)))
 
-        let output = [];
-        while (result !== null) {
-            output.push(result.val);
-            result = result.next;
-        }
-        console.log(output.join(' '));
-
-        rl.close();
-    });
-});
+if __name__ == "__main__":
+    main()
 """
 
 input_data = "2 4 3\n5 6 4\n"
 
-print(run_js_code(java_code, input_data))
+print(run_python_code(java_code, input_data))
