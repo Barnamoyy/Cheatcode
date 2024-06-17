@@ -23,16 +23,17 @@ def run_code(language, code, input_data):
         return "Unsupported language"
 
 def run_python_code(code, input_data):
+    with tempfile.NamedTemporaryFile(delete=False, suffix=".py") as temp:
+        temp.write(code.encode())
+        temp.close()
+        py_file = temp.name
     try:
-        code_with_input = f'input_data = """{input_data}"""\n' + code
-        exec_globals = {}
-        f = io.StringIO()
-        with redirect_stdout(f):
-            exec(code_with_input, exec_globals)
-        output = f.getvalue()
+        run_result = subprocess.run(["python3", py_file], input=input_data, capture_output=True, text=True)
+        output = run_result.stdout if run_result.returncode == 0 else run_result.stderr
         return output.strip()
-    except Exception as e:
-        return str(e)
+    finally: 
+        if os.path.exists(py_file):
+            os.remove(py_file)
 
 def run_js_code(code, input_data):
     # creating a name temporary file 
@@ -44,10 +45,7 @@ def run_js_code(code, input_data):
     try: 
         # run the compiled javascript code
         # Explicitly set the PATH for the subprocess
-        env = os.environ.copy()
-        env["PATH"] = "/path/to/nodejs/bin:" + env["PATH"]  # Replace with actual path to Node.js bin directory
-
-        run_result = subprocess.run(["node", js_file], input=input_data, capture_output=True, text=True, env=env)
+        run_result = subprocess.run(["/usr/local/bin/node", js_file], input=input_data, capture_output=True, text=True)
         output = run_result.stdout if run_result.returncode == 0 else run_result.stderr
         return output.strip()
 
