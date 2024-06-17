@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { use, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { getFontSize, setFontSize } from "@/lib/storage";
 
 import axios from "axios";
@@ -19,9 +19,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { set } from "date-fns";
 import TestcaseWindow from "@/components/testcase-window";
-import { format } from "path";
+import Outputtab from "@/components/output-tab";
 
 interface Problem {
   id: string;
@@ -81,14 +80,17 @@ const Page = () => {
 
   const params = useParams<{ pid: string }>();
 
-  // logic for submitting code 
+  // logic for submitting code
   const submitCode = async () => {
     try {
-      const formattedTestcases = currentProblem?.testcases.map(tc => [tc.input, tc.output])
-      const response = await axios.post('http://localhost:8080/run_code', {
+      const formattedTestcases = currentProblem?.testcases.map((tc) => [
+        tc.input,
+        tc.output,
+      ]);
+      const response = await axios.post("http://localhost:8080/run_code", {
         language,
         code,
-        test_cases: formattedTestcases
+        test_cases: formattedTestcases,
       });
       setResults(response.data.results);
     } catch (error) {
@@ -96,7 +98,7 @@ const Page = () => {
     }
   };
 
-  useEffect(() => { 
+  useEffect(() => {
     console.log(results);
   }, [results]);
 
@@ -223,7 +225,9 @@ const Page = () => {
               }}
             />
             <div className="flex flex-row space-x-4 lg:space-x-8 items-center">
-              <Button className="text-white bg-green-500" onClick={submitCode}>Submit</Button>
+              <Button className="text-white bg-green-500" onClick={submitCode}>
+                Submit
+              </Button>
               <Popover>
                 <PopoverTrigger asChild>
                   <Settings className="cursor-pointer" />
@@ -255,6 +259,7 @@ const Page = () => {
           </div>
         </ResizablePanel>
       </ResizablePanelGroup>
+      <Outputtab output={results} />
     </div>
   );
 };
