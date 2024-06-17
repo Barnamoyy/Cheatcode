@@ -35,46 +35,85 @@ def run_python_code(code, input_data):
         return str(e)
 
 def run_js_code(code, input_data):
+    # creating a name temporary file 
     with tempfile.NamedTemporaryFile(delete=False, suffix=".js") as temp:
-        temp.write(f"const input_data = {input_data};\n".encode() + code.encode())
+        temp.write(code.encode())
         temp.close()
-        result = subprocess.run(["node", temp.name], capture_output=True, text=True)
-        os.remove(temp.name)
-        return result.stdout if result.returncode == 0 else result.stderr
+        js_file = temp.name
+    
+    try: 
+        # run the compiled javascript code
+        # Explicitly set the PATH for the subprocess
+        env = os.environ.copy()
+        env["PATH"] = "/path/to/nodejs/bin:" + env["PATH"]  # Replace with actual path to Node.js bin directory
+
+        run_result = subprocess.run(["node", js_file], input=input_data, capture_output=True, text=True, env=env)
+        output = run_result.stdout if run_result.returncode == 0 else run_result.stderr
+        return output.strip()
+
+    finally: 
+        if os.path.exists(js_file):
+            os.remove(js_file)
 
 def run_java_code(code, input_data):
-    class_name = code.split('public class ')[1].split(' ')[0]
-    java_file_path = os.path.join(tempfile.gettempdir(), f"{class_name}.java")
-    
-    with open(java_file_path, "w") as temp:
-        temp.write(f"public class {class_name} {{ public static void main(String[] args) }} {{ String input_data = \"{input_data}\";\n }}")
-        temp.write(code)
-        temp.write(" } }")
+    class_name = "Main"
+    # Create a temporary directory
+    with tempfile.TemporaryDirectory() as tempdir:
+        # Define the path for the Java file with a fixed name
+        java_file_path = os.path.join(tempdir, f"{class_name}.java")
         
-    compile_result = subprocess.run(["javac", java_file_path], capture_output=True, text=True)
-    if compile_result.returncode != 0:
-        os.remove(java_file_path)
-        return compile_result.stderr
+        # Write the Java code to the file
+        with open(java_file_path, "w", encoding="utf-8") as java_file:
+            java_file.write(code)
+        
+        try:
+            # Compile the Java code
+            compile_result = subprocess.run(["javac", java_file_path], capture_output=True, text=True)
+            if compile_result.returncode != 0:
+                return compile_result.stderr
+            
+            # Run the compiled Java class
+            run_process = subprocess.run(
+                ["java", "-cp", tempdir, class_name],
+                capture_output=True,
+                text=True,
+                input=input_data,
+            )
 
-    run_result = subprocess.run(["java", class_name], capture_output=True, text=True, cwd=tempfile.gettempdir())
-
-    os.remove(java_file_path)
-    os.remove(os.path.join(tempfile.gettempdir(), f"{class_name}.class"))
-    
-    return run_result.stdout if run_result.returncode == 0 else run_result.stderr
+            output = run_process.stdout if run_process.returncode == 0 else run_process.stderr
+            return output.strip()
+        finally:
+            # Clean up the temporary files
+            if os.path.exists(java_file_path):
+                os.remove(java_file_path)
+            class_file_path = java_file_path.replace(".java", ".class")
+            if os.path.exists(class_file_path):
+                os.remove(class_file_path)
 
 def run_cpp_code(code, input_data):
+    # Create a temporary file for the C++ source code
     with tempfile.NamedTemporaryFile(delete=False, suffix=".cpp") as temp:
-        temp.write(f'const std::string input_data = "{input_data}";\n'.encode() + code.encode())
+        temp.write(code.encode())
         temp.close()
-        compile_result = subprocess.run(["g++", temp.name, "-o", temp.name + ".out"], capture_output=True, text=True)
+        cpp_file = temp.name
+        exe_file = temp.name + ".out"
+
+    try:
+        # Compile the C++ program
+        compile_result = subprocess.run(["g++", cpp_file, "-o", exe_file], capture_output=True, text=True)
         if compile_result.returncode != 0:
-            os.remove(temp.name)
+            os.remove(cpp_file)
             return compile_result.stderr
-        run_result = subprocess.run([temp.name + ".out"], capture_output=True, text=True)
-        os.remove(temp.name)
-        os.remove(temp.name + ".out")
-        return run_result.stdout if run_result.returncode == 0 else run_result.stderr
+
+        # Run the compiled program
+        run_result = subprocess.run([exe_file], input=input_data, capture_output=True, text=True)
+        output = run_result.stdout if run_result.returncode == 0 else run_result.stderr
+        return output.strip()
+
+    finally:
+        os.remove(cpp_file)
+        if os.path.exists(exe_file):
+            os.remove(exe_file)
 
 @app.route('/run_code', methods=['POST'])
 def run_code_endpoint():
