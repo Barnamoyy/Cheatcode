@@ -32,32 +32,6 @@ const DashboardHome = () => {
     const [loading, setLoading] = useState<boolean>(false);
   const [problems, setProblems] = useState<Problem[]>();
 
-  // useEffect(() => {
-  //   const fetchData = async () => {
-
-  //     // redis client 
-  //     const cache = await redis.get("problems"); 
-  //     if (cache) {
-  //       setProblems(JSON.parse(cache as string));
-  //       return;
-  //     }
-
-  //     try {
-  //       setLoading(true);
-  //       const res = await axios.get("api/get");
-  //       await redis.set("problems", JSON.stringify(res.data));
-  //       await redis.expire("problems", 60);
-  //       setProblems(res.data);
-  //     } catch (error) {
-  //       console.error(error);
-  //     } finally {
-  //       setLoading(false);
-  //     }
-  //   };
-
-  //   fetchData();
-  // }, []);
-
   useEffect(() => {
     const fetchData = async () => {
       try {
