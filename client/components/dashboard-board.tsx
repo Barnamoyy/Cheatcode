@@ -17,6 +17,9 @@ import axios from "axios";
 import { Skeleton } from "@/components/ui/skeleton"
 import Link from "next/link";
 
+// redis client 
+import redis from "@/redisClient";
+
 interface Problem {
   id: string; 
   title: string;
@@ -29,14 +32,66 @@ const DashboardHome = () => {
     const [loading, setLoading] = useState<boolean>(false);
   const [problems, setProblems] = useState<Problem[]>();
 
+  // useEffect(() => {
+  //   const fetchData = async () => {
+
+  //     // redis client 
+  //     const cache = await redis.get("problems"); 
+  //     if (cache) {
+  //       setProblems(JSON.parse(cache as string));
+  //       return;
+  //     }
+
+  //     try {
+  //       setLoading(true);
+  //       const res = await axios.get("api/get");
+  //       await redis.set("problems", JSON.stringify(res.data));
+  //       await redis.expire("problems", 60);
+  //       setProblems(res.data);
+  //     } catch (error) {
+  //       console.error(error);
+  //     } finally {
+  //       setLoading(false);
+  //     }
+  //   };
+
+  //   fetchData();
+  // }, []);
+
   useEffect(() => {
     const fetchData = async () => {
       try {
+        // Retrieve from Redis
+        const cache = await redis.get("problems");
+
+        if (cache) {
+          try {
+            // Attempt to parse the cache
+            const parsedCache = JSON.parse(cache as string);
+            setProblems(parsedCache);
+            return;
+          } catch (e) {
+            console.error("Error parsing JSON from Redis cache:", e);
+            // Fall through to fetch from the API if parsing fails
+          }
+        }
+
+        // If no valid cache, fetch from API
         setLoading(true);
-        const res = await axios.get("api/get");
-        setProblems(res.data);
+        const res = await axios.get("/api/get");
+        const fetchedData = res.data;
+
+        // Ensure the fetched data is a JSON serializable object
+        if (typeof fetchedData === "object") {
+          await redis.set("problems", JSON.stringify(fetchedData));
+          await redis.expire("problems", 60);
+        } else {
+          console.error("Fetched data is not a valid object:", fetchedData);
+        }
+
+        setProblems(fetchedData);
       } catch (error) {
-        console.error(error);
+        console.error("Error fetching data:", error);
       } finally {
         setLoading(false);
       }
@@ -58,15 +113,11 @@ const DashboardHome = () => {
                   <TableHead>Title</TableHead>
                   <TableHead>Difficulty</TableHead>
                   <TableHead>Acceptance</TableHead>
-                  <TableHead className="text-left">Solution</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading && (
                     <TableRow>
-                        <TableCell>
-                        <Skeleton className="w-[full] h-[20px] rounded-full" />
-                        </TableCell>
                         <TableCell>
                         <Skeleton className="w-[full] h-[20px] rounded-full" />
                         </TableCell>
@@ -114,9 +165,6 @@ const DashboardHome = () => {
                         ) : <></>}
                       </TableCell>
                       <TableCell>{problem.acceptance}</TableCell>
-                      <TableCell className="text-left truncate">
-                        {problem.description}
-                      </TableCell>
                     </TableRow>
                   ))}
               </TableBody>
